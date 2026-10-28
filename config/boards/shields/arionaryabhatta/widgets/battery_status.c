@@ -27,27 +27,7 @@ struct peripheral_battery_state {
     uint8_t level;
 };
     
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL) && IS_ENABLED(CONFIG_ZMK_SPLIT_BLE)
-#define PERIPHERAL_COUNT ZMK_SPLIT_BLE_PERIPHERAL_COUNT
-#else
-#define PERIPHERAL_COUNT 0 // unibody: no peripheral halves to report
-#endif
-
-#define BATTERY_CANVAS_FORMAT LV_COLOR_FORMAT_L8
-static uint8_t battery_image_buffer[MAX(PERIPHERAL_COUNT, 1)]
-                                   [LV_CANVAS_BUF_SIZE(5, 8, LV_COLOR_FORMAT_GET_BPP(BATTERY_CANVAS_FORMAT),
-                                                       LV_DRAW_BUF_STRIDE_ALIGN)];
-
-static void canvas_draw_rect(lv_obj_t *canvas, int32_t x, int32_t y, int32_t w, int32_t h,
-                             lv_draw_rect_dsc_t *draw_dsc) {
-    lv_layer_t layer;
-    lv_canvas_init_layer(canvas, &layer);
-
-    lv_area_t coords = {x, y, x + w - 1, y + h - 1};
-    lv_draw_rect(&layer, draw_dsc, &coords);
-
-    lv_canvas_finish_layer(canvas, &layer);
-}
+static lv_color_t battery_image_buffer[ZMK_SPLIT_BLE_PERIPHERAL_COUNT][5 * 8];
 
 static void draw_battery(lv_obj_t *canvas, uint8_t level) {
     lv_canvas_fill_bg(canvas, lv_color_black(), LV_OPA_COVER);
@@ -56,21 +36,21 @@ static void draw_battery(lv_obj_t *canvas, uint8_t level) {
     lv_draw_rect_dsc_init(&rect_fill_dsc);
     rect_fill_dsc.bg_color = lv_color_white();
 
-    lv_canvas_set_px(canvas, 0, 0, lv_color_white(), LV_OPA_COVER);
-    lv_canvas_set_px(canvas, 4, 0, lv_color_white(), LV_OPA_COVER);
+    lv_canvas_set_px(canvas, 0, 0, lv_color_white());
+    lv_canvas_set_px(canvas, 4, 0, lv_color_white());
 
     if (level > 90) {
         // full
     } else if (level > 70) {
-        canvas_draw_rect(canvas, 1, 2, 3, 1, &rect_fill_dsc);
+        lv_canvas_draw_rect(canvas, 1, 2, 3, 1, &rect_fill_dsc);
     } else if (level > 50) {
-        canvas_draw_rect(canvas, 1, 2, 3, 2, &rect_fill_dsc);
+        lv_canvas_draw_rect(canvas, 1, 2, 3, 2, &rect_fill_dsc);
     } else if (level > 30) {
-        canvas_draw_rect(canvas, 1, 2, 3, 3, &rect_fill_dsc);
+        lv_canvas_draw_rect(canvas, 1, 2, 3, 3, &rect_fill_dsc);
     } else if (level > 10) {
-        canvas_draw_rect(canvas, 1, 2, 3, 4, &rect_fill_dsc);
+        lv_canvas_draw_rect(canvas, 1, 2, 3, 4, &rect_fill_dsc);
     } else {
-        canvas_draw_rect(canvas, 1, 2, 3, 5, &rect_fill_dsc);
+        lv_canvas_draw_rect(canvas, 1, 2, 3, 5, &rect_fill_dsc);
     }
 }
 
@@ -113,11 +93,11 @@ int zmk_widget_peripheral_battery_status_init(struct zmk_widget_peripheral_batte
 
     lv_obj_set_size(widget->obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
 
-    for (int i = 0; i < PERIPHERAL_COUNT; i++) {
+    for (int i = 0; i < ZMK_SPLIT_BLE_PERIPHERAL_COUNT; i++) {
         lv_obj_t *image_canvas = lv_canvas_create(widget->obj);
         lv_obj_t *battery_label = lv_label_create(widget->obj);
 
-        lv_canvas_set_buffer(image_canvas, battery_image_buffer[i], 5, 8, BATTERY_CANVAS_FORMAT);
+        lv_canvas_set_buffer(image_canvas, battery_image_buffer[i], 5, 8, LV_IMG_CF_TRUE_COLOR);
 
         lv_obj_align(image_canvas, LV_ALIGN_TOP_RIGHT, 0, i * 10);
         lv_obj_align(battery_label, LV_ALIGN_TOP_RIGHT, -7, i * 10);

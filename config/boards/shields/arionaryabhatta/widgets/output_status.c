@@ -55,7 +55,7 @@ enum selection_line_state {
     selection_line_state_bt
 } current_selection_line_state;
 
-lv_point_precise_t selection_line_points[] = { {-1, 0}, {12, 0} };
+lv_point_t selection_line_points[] = { {-1, 0}, {12, 0} }; // will be replaced with  
 
 struct output_status_state {
     struct zmk_endpoint_instance selected_endpoint;
@@ -67,7 +67,7 @@ struct output_status_state {
 
 static struct output_status_state get_state(const zmk_event_t *_eh) {
     return (struct output_status_state){
-        .selected_endpoint = zmk_endpoint_get_selected(),
+        .selected_endpoint = zmk_endpoints_selected(),
         .active_profile_index = zmk_ble_active_profile_index(),
         .active_profile_connected = zmk_ble_active_profile_is_connected(),
         .active_profile_bonded = !zmk_ble_active_profile_is_open(),
@@ -127,8 +127,6 @@ static void set_status_symbol(lv_obj_t *widget, struct output_status_state state
             change_size_object(selection_line, 11, 18);
             current_selection_line_state = selection_line_state_bt;
         }
-        break;
-    case ZMK_TRANSPORT_NONE: // no endpoint connected: keep the line where it is
         break;
     }
 
